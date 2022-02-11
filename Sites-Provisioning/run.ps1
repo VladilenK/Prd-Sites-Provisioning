@@ -75,7 +75,7 @@ $siteRequests = Get-PnPListItem -List $list -Connection $connectionIntake
 Write-Host "Total number of requests in the list:" $siteRequests.Count
 Write-Host "New requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "New"} | measure-object).Count
 Write-Host "In Progress requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "In Progress"} | measure-object).Count
-$siteRequest = $siteRequests | select -Last 1
+# $siteRequest = $siteRequests | select -Last 1
 foreach($siteRequest in $siteRequests) {
   if     ($siteRequest.FieldValues["RequestStatus"] -eq "New") {} 
   elseif ($siteRequest.FieldValues["RequestStatus"] -eq "In Progress" ) {}
@@ -297,3 +297,9 @@ return
 #  Administratorâ€™s
 #  Administrator's
 
+return
+Connect-AzAccount
+
+$siteRequest = $siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "Failed"} | select -Last 1
+$siteRequest 
+Set-PnPListItem -List $list -Identity $siteRequest -Values @{"RequestStatus" = "In Progress"} -Connection $connectionIntake
