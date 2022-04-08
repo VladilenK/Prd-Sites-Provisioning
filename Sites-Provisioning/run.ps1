@@ -76,6 +76,8 @@ Write-Host "Total number of requests in the list:" $siteRequests.Count
 Write-Host "New requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "New"} | measure-object).Count
 Write-Host "In Progress requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "In Progress"} | measure-object).Count
 # $siteRequest = $siteRequests | select -Last 1
+# $siteRequest = $siteRequests[-2]; $siteRequest
+# $siteRequest = $siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "Failed"} | ?{$_.FieldValues["Title"] -like "*Enterpr*"}; $siteRequest
 foreach($siteRequest in $siteRequests) {
   if     ($siteRequest.FieldValues["RequestStatus"] -eq "New") {} 
   elseif ($siteRequest.FieldValues["RequestStatus"] -eq "In Progress" ) {}
@@ -191,11 +193,12 @@ foreach($siteRequest in $siteRequests) {
           Set-PnPListItem -List $list -Identity $siteRequest -Values @{"Automation_Comment"="Site is being created"} -Connection $connectionIntake
           Set-PnPListItem -List $list -Identity $siteRequest -Values @{"RequestStatus" = "In Progress"} -Connection $connectionIntake
         } else {
-          start-sleep -Seconds 3
+          start-sleep -Seconds 10
           $lastError = $Error[0]
           $message = $lastError.Exception.Message    ; Write-Host $message -ForegroundColor Yellow; $message | Out-File $outputFileName -Append
           Set-PnPListItem -List $list -Identity $siteRequest -Values @{"Automation_Comment"= $message} -Connection $connectionIntake
           Set-PnPListItem -List $list -Identity $siteRequest -Values @{"RequestStatus" = "Failed"} -Connection $connectionIntake
+          $message = "... trying to remove the site after unsuccessful New-PnPTenantSite..." ; Write-Host $message -ForegroundColor Yellow; $message | Out-File $outputFileName -Append
           Remove-PnPTenantSite -Connection  $connectionAdmin -Url $siteUrlProposed -Force -SkipRecycleBin
         }
       }    
@@ -213,11 +216,11 @@ foreach($siteRequest in $siteRequests) {
         "New Site Created:" + $newPnpTenantSite.Url | Out-File $outputFileName -Append  
         $siteAdmin2 = $siteRequest.FieldValues["Secondary_x0020_Admin"]
         Set-PnPTenantSite -Url $newPnpTenantSite.Url -Owners $siteAdmin2.Email  -Connection $connectionAdmin
-        $groupLoginName = "c:0t.c|tenant|99d76526-258f-4841-a830-c0a00c2ee945" # "SPO_Support" azure ad security group
-        Set-PnPTenantSite -Url $newPnpTenantSite.Url -Owners $groupLoginName -Connection $connectionAdmin
+        # $groupLoginName = "c:0t.c|tenant|99d76526-258f-4841-a830-c0a00c2ee945" # "SPO_Support" azure ad security group
+        # Set-PnPTenantSite -Url $newPnpTenantSite.Url -Owners $groupLoginName -Connection $connectionAdmin
 
         # disable custom scripts
-        Set-PnPTenantSite -Url $newPnpTenantSite.Url -DenyAddAndCustomizePages  -Connection $connectionAdmin
+        Set-PnPTenantSite -Url $newPnpTenantSite.Url -DenyAddAndCustomizePages:$true -Connection $connectionAdmin
         # $DenyAddAndCustomizePagesStatusEnum = [Microsoft.Online.SharePoint.TenantAdministration.DenyAddAndCustomizePagesStatus]
         # $newPnpTenantSite.DenyAddAndCustomizePages = $DenyAddAndCustomizePagesStatusEnum::Enabled
         # $newPnpTenantSite.Update()
@@ -303,3 +306,9 @@ Connect-AzAccount
 $siteRequest = $siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "Failed"} | select -Last 1
 $siteRequest 
 Set-PnPListItem -List $list -Identity $siteRequest -Values @{"RequestStatus" = "In Progress"} -Connection $connectionIntake
+Set-PnPListItem -List $list -Identity $siteRequest -Values @{"RequestStatus" = "New"} -Connection $connectionIntake
+Set-PnPListItem -List $list -Identity $siteRequest -Values @{"Primary_x0020_Admin" = "allison_f_copeland@uhc.com"} -Connection $connectionIntake
+
+$list.Fields
+
+

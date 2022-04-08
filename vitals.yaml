@@ -1,0 +1,9 @@
+  apiVersion: v1
+  metadata:
+    askId:
+      - AIDE_0073504
+    caAgileId 607270314141d
+    projectKey 
+    projectFriendlyName 
+    componentType code
+    targetQG GATE_00
