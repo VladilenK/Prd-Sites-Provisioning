@@ -68,7 +68,7 @@ $siteRequests = Get-PnPListItem -List $list -Connection $connectionIntake
 Write-Host "Total number of requests in the list:" $siteRequests.Count
 Write-Host "New requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "New"} | measure-object).Count
 Write-Host "In Progress requests in the list:" $($siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "In Progress"} | measure-object).Count
-# $siteRequest = $siteRequests | select -Last 1
+# $siteRequest = $siteRequests | select -Last 1; $siteRequest
 # $siteRequest = $siteRequests[-2]; $siteRequest
 # $siteRequest = $siteRequests | ?{$_.FieldValues["RequestStatus"] -eq "Failed"} | ?{$_.FieldValues["Title"] -like "*Enterpr*"}; $siteRequest
 foreach($siteRequest in $siteRequests) {

@@ -35,9 +35,13 @@ $connectionIntake = Get-PnPConnection
 $list = Get-PnPList -Identity $listRelUrl -Connection $connectionIntake
 # $list | Format-Table -a
 
+$scaRequests = @()
 $scaRequests = Get-PnPListItem -List $list -Connection $connectionIntake
 $scaRequests.Count
 
+$scaRequest = $scaRequests | select -last 1; 
+$scaRequest.FieldValues[$siteUrlFieldName]
+$scaRequest.FieldValues[$requestStatusFieldName]
 foreach($scaRequest in $scaRequests) {
   Write-Host "Site:" $scaRequest.FieldValues[$siteUrlFieldName]  -NoNewline
   switch($scaRequest.FieldValues[$requestStatusFieldName]){
@@ -45,7 +49,7 @@ foreach($scaRequest in $scaRequests) {
     "New" { 
       Write-Host " - Working with the NEW request" -ForegroundColor Green
       $tempAdmin = $null
-      $tempAdmin = $scaRequest.FieldValues[$tempAdminFieldName].Email
+      $tempAdmin = Get-PnPUser -Identity $scaRequest.FieldValues[$tempAdminFieldName].LookupId
       if ($tempAdmin) {
       } else {
         $message = "Temp Admin must be specified."
@@ -74,7 +78,7 @@ foreach($scaRequest in $scaRequests) {
 
       # check Temp_Admin for eligability
 
-      Set-PnPTenantSite -Url $scaRequest.FieldValues[$siteUrlFieldName] -Owner $tempAdmin -Connection $connectionAdmin
+      Set-PnPTenantSite -Url $scaRequest.FieldValues[$siteUrlFieldName] -Owner $tempAdmin.LoginName -Connection $connectionAdmin
       if ($?) {
         $message = "Access has been provided."
         Write-Host " - $message "
@@ -120,8 +124,16 @@ return
   $list.Fields | ft -a
   $scaRequest = $scaRequests | select -First 1
 
+$requestUpdateValues = @{
+  $automationCommentFieldName = $message;
+  $requestStatusFieldName     = "New"
+}
+Set-PnPListItem -List $list -Identity $scaRequest -Values $requestUpdateValues -Connection $connectionIntake
 
+$scaRequest.FieldValues[$tempAdminFieldName] | fl
+$scaRequest.FieldValues[$tempAdminFieldName]
 
+Get-PnPUser -Identity 38
 
 
 
